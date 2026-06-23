@@ -6,6 +6,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // Contexto de la BD principal (scaffold)
 builder.Services.AddDbContext<NorthwindContext>(options =>
@@ -40,6 +48,7 @@ app.UseRouting();
 
 app.UseAuthentication(); // ← antes de UseAuthorization
 app.UseAuthorization();
+app.UseSession();
 
 // Seed de roles y usuarios iniciales
 using (var scope = app.Services.CreateScope())

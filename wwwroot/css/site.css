@@ -18,7 +18,11 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin-bottom: 0;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +32,68 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+}
+
+.table {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+.search-box {
+  max-width: 350px;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  padding: 3rem 0;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  border-left: 4px solid #6366f1;
+}
+
+.stat-card.success {
+  border-left-color: #14b8a6;
+}
+
+.stat-card.warning {
+  border-left-color: #eab308;
+}
+
+.stat-card.danger {
+  border-left-color: #f97316;
+}
+
+.footer {
+  background-color: #212529;
+  color: rgba(255,255,255,0.7);
+}
+
+.footer a {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: white;
+  text-decoration: underline;
 }
