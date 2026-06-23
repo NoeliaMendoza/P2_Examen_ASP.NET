@@ -1,5 +1,6 @@
 bin/
 obj/
 .vs/
+tmp-build-check/
 *.user
 appsettings.Development.json
