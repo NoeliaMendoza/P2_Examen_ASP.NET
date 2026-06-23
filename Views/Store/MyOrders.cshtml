@@ -1,0 +1,46 @@
+@model IEnumerable<NorthwindApp.Models.Order>
+
+@{
+    ViewData["Title"] = "Mis órdenes";
+}
+
+<h1>Mis órdenes</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No tienes órdenes registradas. <a asp-action="Index">Ver productos</a>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Orden #</th>
+                <th>Fecha</th>
+                <th>Destinatario</th>
+                <th>Productos</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                var total = order.OrderDetails.Sum(od => od.Quantity * od.UnitPrice);
+                <tr>
+                    <td>@order.OrderId</td>
+                    <td>@order.OrderDate</td>
+                    <td>@order.ShipName</td>
+                    <td>@order.OrderDetails.Count</td>
+                    <td>$@(total.ToString("F2"))</td>
+                    <td>
+                        <a asp-action="OrderConfirmation" asp-route-id="@order.OrderId"
+                           class="btn btn-sm btn-outline-info">Detalle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

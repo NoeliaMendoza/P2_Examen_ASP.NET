@@ -1,0 +1,61 @@
+@model NorthwindApp.Models.Order
+
+@{
+    ViewData["Title"] = "Compra confirmada";
+    var total = Model.OrderDetails.Sum(od => od.Quantity * od.UnitPrice);
+}
+
+<div class="text-center mb-4">
+    <h1 class="text-success">¡Compra confirmada!</h1>
+    <p class="lead">Orden #@Model.OrderId registrada el @Model.OrderDate</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h4>Datos de envío</h4>
+    </div>
+    <div class="card-body">
+        <p><strong>Destinatario:</strong> @Model.ShipName</p>
+        <p><strong>Dirección:</strong> @Model.ShipAddress, @Model.ShipCity, @Model.ShipCountry</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4>Productos adquiridos</h4>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    <tr>
+                        <td>@detail.Product?.ProductName</td>
+                        <td>$@(detail.UnitPrice.ToString("F2"))</td>
+                        <td>@detail.Quantity</td>
+                        <td>$@((detail.Quantity * detail.UnitPrice).ToString("F2"))</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                    <td><strong>$@(total.ToString("F2"))</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="MyOrders" class="btn btn-primary">Ver mis órdenes</a>
+    <a asp-action="Index" class="btn btn-outline-primary">Seguir comprando</a>
+</div>

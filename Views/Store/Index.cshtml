@@ -1,0 +1,104 @@
+@model IEnumerable<NorthwindApp.Models.Product>
+
+@{
+    ViewData["Title"] = "Tienda";
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 0);
+    var searchString = (string?)ViewData["SearchString"];
+    var isCustomer = User.IsInRole("Customer");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Tienda</h1>
+</div>
+
+<form method="get" class="d-flex mb-3">
+    <div class="input-group search-box">
+        <input type="text" name="searchString" class="form-control" placeholder="Buscar productos..." value="@searchString" />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(searchString))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+    <a asp-action="Cart" class="btn btn-outline-success ms-2">Carrito</a>
+</form>
+
+<div class="row g-3">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-3 col-6">
+            <div class="card card-hover h-100 shadow-sm">
+                <img src="https://picsum.photos/seed/@item.ProductId/200/200" alt="@item.ProductName" class="card-img-top" style="height:180px;object-fit:cover;">
+                <div class="card-body text-center d-flex flex-column">
+                    <h6 class="fw-bold">@item.ProductName</h6>
+                    @if (item.Category != null)
+                    {
+                        <span class="badge bg-secondary bg-opacity-25 text-dark mb-2">@item.Category.CategoryName</span>
+                    }
+                    <p class="text-primary fw-bold fs-5 mb-2">$@(item.UnitPrice?.ToString("F2"))</p>
+                    <p class="text-muted small mb-2">Stock: @item.UnitsInStock</p>
+                    <div class="mt-auto">
+                        @if (isCustomer)
+                        {
+                            <form asp-action="AddToCart" method="post" class="add-to-cart-form">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Agregar</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-primary btn-sm w-100">Iniciar sesión</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Páginas de tienda" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@searchString">Anterior</a>
+            </li>
+            @for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+            {
+                <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@pageNumber" asp-route-searchString="@searchString">@pageNumber</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@searchString">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                fetch(this.action, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            var badge = document.getElementById('cartCount');
+                            if (badge) badge.textContent = data.cartCount;
+                            var toast = document.createElement('div');
+                            toast.className = 'alert alert-success position-fixed bottom-0 end-0 m-3';
+                            toast.style.zIndex = '9999';
+                            toast.textContent = 'Producto agregado al carrito';
+                            document.body.appendChild(toast);
+                            setTimeout(() => toast.remove(), 2000);
+                        }
+                    });
+            });
+        });
+    </script>
+}
