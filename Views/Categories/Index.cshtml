@@ -1,49 +1,45 @@
 @model IEnumerable<NorthwindApp.Models.Category>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Categorías";
+    var searchString = (string?)ViewData["SearchString"];
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Categorías</h1>
+    <a asp-action="Create" class="btn btn-primary">Crear nueva</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
+<form method="get" class="d-flex mb-3">
+    <div class="input-group search-box">
+        <input type="text" name="searchString" class="form-control" placeholder="Buscar categorías..." value="@searchString" />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(searchString))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<table class="table table-hover">
+    <thead class="table-dark">
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Picture)
-            </th>
-            <th>Status</th>
+            <th>@Html.DisplayNameFor(model => model.CategoryName)</th>
+            <th>@Html.DisplayNameFor(model => model.Description)</th>
+            <th>Estado</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
+            <td>@Html.DisplayFor(modelItem => item.CategoryName)</td>
+            <td>@Html.DisplayFor(modelItem => item.Description)</td>
+            <td><span class="badge bg-success">Activo</span></td>
             <td>
-                @Html.DisplayFor(modelItem => item.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Picture)
-            </td>
-            <td>
-                @(item.Discontinued == 0 ? "Active" : "Discontinued")
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.CategoryId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.CategoryId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a asp-action="Details" asp-route-id="@item.CategoryId" class="btn btn-sm btn-outline-info">Detalles</a>
+                <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-outline-danger">Eliminar</a>
             </td>
         </tr>
 }

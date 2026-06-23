@@ -1,8 +1,23 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using System.Text.Json
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var isAdmin = User.IsInRole("Admin");
+    var isEmployee = User.IsInRole("Employee");
+    var isCustomer = User.IsInRole("Customer");
+    var cartUser = User.Identity?.Name ?? "anonymous";
+    var cartJson = HttpContextAccessor?.HttpContext?.Session?.GetString("Cart_" + cartUser);
+    var cartCount = 0;
+    if (cartJson != null)
+    {
+        var cart = JsonSerializer.Deserialize<List<NorthwindApp.Models.CartItem>>(cartJson);
+        if (cart != null) cartCount = cart.Sum(c => c.Quantity);
+    }
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
@@ -12,14 +27,16 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/NorthwindApp.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
-<body>
+<body class="d-flex flex-column h-100">
     <header>
-        <nav
-            class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">NorthwindApp</a>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom border-secondary shadow">
+            <div class="container">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    NorthwindApp
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                         data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false"
                         aria-label="Toggle navigation">
@@ -28,39 +45,70 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                               asp-action="Index">Home</a>
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                               asp-action="Queries">Consultas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                               asp-action="Privacy">Privacy</a>
-                        </li>
+                        @if (isCustomer)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Store" asp-action="Index">Tienda</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Store" asp-action="Cart">
+                                    Carrito
+                                    <span id="cartCount" class="badge bg-warning text-dark">@cartCount</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Store" asp-action="MyOrders">Mis órdenes</a>
+                            </li>
+                        }
+                        @if (isAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Orders" asp-action="Index">Órdenes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Products" asp-action="ManageStock">Stock</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Products" asp-action="LowStock">Stock bajo</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Products" asp-action="Index">Productos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Categories" asp-action="Index">Categorías</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Suppliers" asp-action="Index">Proveedores</a>
+                            </li>
+                        }
+                        @if (isEmployee && !isAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Orders" asp-action="Index">Órdenes</a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
-                                <span class="nav-link text-dark">Hola @User.Identity.Name</span>
+                                <span class="nav-link text-light">@User.Identity.Name</span>
                             </li>
                             <li class="nav-item">
-                                <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" method="post"
-                                      class="form-inline">
-                                    <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+                                <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" method="post" class="form-inline">
+                                    <button type="submit" class="nav-link btn btn-link text-light">Cerrar sesión</button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity"
-                                   asp-page="/Account/Register">Register</a>
+                                <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Register">Registrarse</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                                <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Login">Iniciar sesión</a>
                             </li>
                         }
                     </ul>
@@ -68,15 +116,18 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container py-4 flex-grow-1">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - NorthwindApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer border-top py-4 flex-shrink-0">
+        <div class="container text-center">
+            <p class="mb-1">&copy; 2026 NorthwindApp. Todos los derechos reservados.</p>
+            <p class="mb-0">
+                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
+            </p>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

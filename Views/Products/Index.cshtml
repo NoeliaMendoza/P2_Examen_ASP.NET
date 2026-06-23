@@ -1,59 +1,51 @@
 @model IEnumerable<NorthwindApp.Models.Product>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Productos";
     var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
     var totalPages = (int)(ViewData["TotalPages"] ?? 0);
+    var searchString = (string?)ViewData["SearchString"];
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Productos</h1>
+    <a asp-action="Create" class="btn btn-primary">Crear nuevo</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
+<form method="get" class="d-flex mb-3">
+    <div class="input-group search-box">
+        <input type="text" name="searchString" class="form-control" placeholder="Buscar productos..." value="@searchString" />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(searchString))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<table class="table table-hover">
+    <thead class="table-dark">
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductName)
-            </th>
-            <th>
-                Category
-            </th>
-            <th>
-                Supplier
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UnitPrice)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UnitsInStock)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.ProductName)</th>
+            <th>Categoría</th>
+            <th>Proveedor</th>
+            <th>@Html.DisplayNameFor(model => model.UnitPrice)</th>
+            <th>@Html.DisplayNameFor(model => model.UnitsInStock)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
+            <td>@Html.DisplayFor(modelItem => item.ProductName)</td>
+            <td>@Html.DisplayFor(modelItem => item.Category.CategoryName)</td>
+            <td>@Html.DisplayFor(modelItem => item.Supplier.CompanyName)</td>
+            <td>@Html.DisplayFor(modelItem => item.UnitPrice)</td>
+            <td>@Html.DisplayFor(modelItem => item.UnitsInStock)</td>
             <td>
-                @Html.DisplayFor(modelItem => item.ProductName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Supplier.CompanyName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UnitPrice)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UnitsInStock)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-info">Detalles</a>
+                <a asp-action="Delete" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-danger">Eliminar</a>
             </td>
         </tr>
 }
@@ -62,21 +54,19 @@
 
 @if (totalPages > 1)
 {
-    <nav aria-label="Product pages">
-        <ul class="pagination">
+    <nav aria-label="Páginas de productos">
+        <ul class="pagination justify-content-center">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)">Previous</a>
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@searchString">Anterior</a>
             </li>
-
             @for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
             {
                 <li class="page-item @(pageNumber == currentPage ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@pageNumber">@pageNumber</a>
+                    <a class="page-link" asp-action="Index" asp-route-page="@pageNumber" asp-route-searchString="@searchString">@pageNumber</a>
                 </li>
             }
-
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)">Next</a>
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@searchString">Siguiente</a>
             </li>
         </ul>
     </nav>

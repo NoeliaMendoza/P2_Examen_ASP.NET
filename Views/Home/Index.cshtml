@@ -1,11 +1,219 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Inicio";
+    var isAdmin = User.IsInRole("Admin");
+    var isEmployee = User.IsInRole("Employee");
+    var isCustomer = User.IsInRole("Customer");
+    var isGuest = !User.Identity?.IsAuthenticated ?? true;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-    <p>
-        <a class="btn btn-primary" asp-action="Queries" asp-controller="Home">Ver consultas</a>
-    </p>
-</div>
+@if (isAdmin)
+{
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold">Panel de Administración</h1>
+        <p class="lead">Sistema de gestión de inventario y pedidos Northwind</p>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-1">Productos</h6>
+                        <h3 class="mb-0">@ViewBag.TotalProducts</h3>
+                        <small><a asp-controller="Products" asp-action="Index">Ver catálogo</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-1">Categorías</h6>
+                        <h3 class="mb-0">@ViewBag.TotalCategories</h3>
+                        <small><a asp-controller="Categories" asp-action="Index">Explorar</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card warning h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-1">Proveedores</h6>
+                        <h3 class="mb-0">@ViewBag.TotalSuppliers</h3>
+                        <small><a asp-controller="Suppliers" asp-action="Index">Ver todos</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card danger h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted mb-1">Stock bajo</h6>
+                        <h3 class="mb-0">@ViewBag.LowStockCount</h3>
+                        <small><a asp-controller="Products" asp-action="LowStock">Revisar</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-5">
+                    <h5 class="mt-3">Gestionar stock</h5>
+                    <p class="text-muted">Administre el inventario de productos.</p>
+                    <a asp-controller="Products" asp-action="ManageStock" class="btn btn-primary">Gestionar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-5">
+                    <h5 class="mt-3">Órdenes</h5>
+                    <p class="text-muted">Revise y administre los pedidos.</p>
+                    <a asp-controller="Orders" asp-action="Index" class="btn btn-success">Ver órdenes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-5">
+                    <h5 class="mt-3">Productos</h5>
+                    <p class="text-muted">Catálogo completo de productos.</p>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">Ver productos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (isEmployee && !isAdmin)
+{
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold">Panel de Empleado</h1>
+        <p class="lead">Consulte las órdenes de los clientes y gestione el inventario.</p>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-5">
+                    <h5>Ver órdenes</h5>
+                    <p class="text-muted">Consulte las órdenes registradas.</p>
+                    <a asp-controller="Orders" asp-action="Index" class="btn btn-primary">Ir a órdenes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-5">
+                    <h5>Ver productos</h5>
+                    <p class="text-muted">Explore el catálogo de productos.</p>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">Ver productos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (isCustomer)
+{
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold">Bienvenido a Northwind</h1>
+        <p class="lead">Explore nuestra tienda y realice sus pedidos de forma rápida y segura.</p>
+        <a asp-controller="Store" asp-action="Index" class="btn btn-light btn-lg mt-2">Ir a la tienda</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-4">
+                    <h5 class="mt-3">Comprar productos</h5>
+                    <p class="text-muted">Explore nuestro catálogo de productos.</p>
+                    <a asp-controller="Store" asp-action="Index" class="btn btn-primary">Ir a la tienda</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-4">
+                    <h5 class="mt-3">Mi carrito</h5>
+                    <p class="text-muted">Revise los productos en su carrito.</p>
+                    <a asp-controller="Store" asp-action="Cart" class="btn btn-success">Ver carrito</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover h-100">
+                <div class="card-body text-center py-4">
+                    <h5 class="mt-3">Mis órdenes</h5>
+                    <p class="text-muted">Consulte el historial de sus pedidos.</p>
+                    <a asp-controller="Store" asp-action="MyOrders" class="btn btn-warning">Ver órdenes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.FeaturedProducts != null && ((IEnumerable<NorthwindApp.Models.Product>)ViewBag.FeaturedProducts).Any())
+    {
+        <h3 class="mb-3">Productos destacados</h3>
+        <div class="row g-3">
+            @foreach (var product in (IEnumerable<NorthwindApp.Models.Product>)ViewBag.FeaturedProducts)
+            {
+                <div class="col-md-3 col-6">
+                    <div class="card card-hover h-100 text-center p-3">
+                        <img src="https://picsum.photos/seed/@product.ProductId/200/200" alt="@product.ProductName" class="card-img-top rounded" style="height:150px;object-fit:cover;">
+                        <h6 class="mt-2">@product.ProductName</h6>
+                        <p class="text-muted small mb-1">@product.Category?.CategoryName</p>
+                        <h5 class="text-primary mb-2">$@(product.UnitPrice?.ToString("F2"))</h5>
+                        <form asp-controller="Store" asp-action="AddToCart" method="post" class="add-to-cart-form">
+                            <input type="hidden" name="productId" value="@product.ProductId" />
+                            <input type="hidden" name="quantity" value="1" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Agregar</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold">Northwind</h1>
+        <p class="lead">Sistema de gestión de inventario y pedidos. Inicie sesión para acceder a todas las funcionalidades.</p>
+        <div class="mt-3">
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-light btn-lg me-2">Iniciar sesión</a>
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-light btn-lg">Registrarse</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card card-hover text-center h-100">
+                <div class="card-body py-5">
+                    <h5 class="mt-3">@ViewBag.TotalProducts Productos</h5>
+                    <p class="text-muted">Amplio catálogo de productos disponibles.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover text-center h-100">
+                <div class="card-body py-5">
+                    <h5 class="mt-3">@ViewBag.TotalCategories Categorías</h5>
+                    <p class="text-muted">Variedad de categorías para explorar.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-hover text-center h-100">
+                <div class="card-body py-5">
+                    <h5 class="mt-3">@ViewBag.TotalSuppliers Proveedores</h5>
+                    <p class="text-muted">Red de proveedores confiables.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}

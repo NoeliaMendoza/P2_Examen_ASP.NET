@@ -1,14 +1,13 @@
 @model NorthwindApp.Models.Supplier
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Eliminar proveedor";
 }
 
-<h1>Delete</h1>
+<h1>Eliminar proveedor</h1>
 
-<h3>Are you sure you want to remove this supplier from the active list?</h3>
+<h3>¿Está seguro de que desea eliminar este proveedor de la lista activa?</h3>
 <div>
-    <h4>Supplier</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -81,7 +80,7 @@
     
     <form asp-action="Delete">
         <input type="hidden" asp-for="SupplierId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index">Volver a la lista</a>
     </form>
 </div>
