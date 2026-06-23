@@ -10,7 +10,7 @@ public static class IdentitySeeder
         var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
         // Crear roles
-        string[] roles = { "Admin", "Employee" };
+        string[] roles = { "Admin", "Employee", "Customer" };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -45,6 +45,21 @@ public static class IdentitySeeder
         if (!await userManager.IsInRoleAsync(employee, "Employee"))
         {
             await userManager.AddToRoleAsync(employee, "Employee");
+        }
+
+        // Crear usuario cliente
+        string emailCustomer = "cliente@espe.edu.ec";
+        string passwordCustomer = "Cliente123*";
+
+        var customer = await userManager.FindByEmailAsync(emailCustomer);
+        if (customer == null)
+        {
+            customer = new IdentityUser { UserName = emailCustomer, Email = emailCustomer };
+            await userManager.CreateAsync(customer, passwordCustomer);
+        }
+        if (!await userManager.IsInRoleAsync(customer, "Customer"))
+        {
+            await userManager.AddToRoleAsync(customer, "Customer");
         }
     }
 }
