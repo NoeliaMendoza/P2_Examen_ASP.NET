@@ -1,0 +1,46 @@
+@model IEnumerable<NorthwindApp.Models.Product>
+
+@{
+    ViewData["Title"] = "Productos con stock bajo";
+}
+
+<h1>Productos con stock bajo</h1>
+<p class="text-muted">Productos cuyo stock está por debajo del nivel de reorden.</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success">No se encontraron productos con stock bajo.</div>
+}
+else
+{
+    <table class="table table-warning table-striped">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Stock actual</th>
+                <th>Nivel de reorden</th>
+                <th>Déficit</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var deficit = (item.ReorderLevel ?? 0) - (item.UnitsInStock ?? 0);
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td>@item.Category?.CategoryName</td>
+                    <td><strong class="text-danger">@item.UnitsInStock</strong></td>
+                    <td>@item.ReorderLevel</td>
+                    <td>@(deficit > 0 ? deficit : 0)</td>
+                    <td>
+                        <a asp-action="ManageStock" class="btn btn-sm btn-primary">Gestionar stock</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="ManageStock" class="btn btn-outline-primary">Volver a gestión de stock</a>

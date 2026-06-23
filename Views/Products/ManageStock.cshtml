@@ -1,0 +1,115 @@
+@model IEnumerable<NorthwindApp.Models.Product>
+
+@{
+    ViewData["Title"] = "Gestionar stock";
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 0);
+    var searchString = (string?)ViewData["SearchString"];
+}
+
+<h1>Gestionar stock</h1>
+
+@if (TempData["StockMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["StockMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["StockError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["StockError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="get" class="d-flex mb-3">
+    <div class="input-group search-box">
+        <input type="text" name="searchString" class="form-control" placeholder="Buscar producto..." value="@searchString" />
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(searchString))
+        {
+            <a asp-action="ManageStock" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Stock actual</th>
+                <th>Nivel reorden</th>
+                <th>Estado</th>
+                <th>Incrementar</th>
+                <th>Reducir</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var isLowStock = item.UnitsInStock <= item.ReorderLevel;
+                <tr class="@(isLowStock ? "table-warning" : "")">
+                    <td>@item.ProductName</td>
+                    <td>@item.Category?.CategoryName</td>
+                    <td><strong>@item.UnitsInStock</strong></td>
+                    <td>@item.ReorderLevel</td>
+                    <td>
+                        @if (item.Discontinued == 1)
+                        {
+                            <span class="badge bg-danger">Descontinuado</span>
+                        }
+                        else if (isLowStock)
+                        {
+                            <span class="badge bg-warning text-dark">Stock bajo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">OK</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="IncrementStock" method="post" class="d-flex gap-1">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <input type="number" name="quantity" value="10" min="1" class="form-control" style="max-width:70px" />
+                            <button type="submit" class="btn btn-sm btn-success">+</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form asp-action="DecrementStock" method="post" class="d-flex gap-1">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <input type="number" name="quantity" value="1" min="1" class="form-control" style="max-width:70px" />
+                            <button type="submit" class="btn btn-sm btn-danger">-</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Páginas de stock">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="ManageStock" asp-route-page="@(currentPage - 1)" asp-route-searchString="@searchString">Anterior</a>
+            </li>
+            @for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+            {
+                <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="ManageStock" asp-route-page="@pageNumber" asp-route-searchString="@searchString">@pageNumber</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="ManageStock" asp-route-page="@(currentPage + 1)" asp-route-searchString="@searchString">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+<a asp-action="LowStock" class="btn btn-warning">Ver productos con stock bajo</a>
+<a asp-action="Index" class="btn btn-outline-primary">Volver a productos</a>
