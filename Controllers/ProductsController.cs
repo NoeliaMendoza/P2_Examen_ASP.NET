@@ -21,25 +21,33 @@ namespace NorthwindApp.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index(int page = 1)
+        [Authorize(Roles = "Admin,Employee")]
+        public async Task<IActionResult> Index(string searchString, int page = 1)
         {
             const int pageSize = 10;
             page = Math.Max(page, 1);
 
             var query = _context.Products
-                .Where(p => p.Discontinued == 0);
+                .Where(p => p.Discontinued == 0)
+                .Include(p => p.Category)
+                .Include(p => p.Supplier)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(p =>
+                    p.ProductName.Contains(searchString) ||
+                    p.Category.CategoryName.Contains(searchString) ||
+                    p.Supplier.CompanyName.Contains(searchString));
+            }
 
             var totalProducts = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalProducts / (double)pageSize);
 
             if (totalPages > 0 && page > totalPages)
-            {
                 page = totalPages;
-            }
 
             var productos = await query
-                .Include(p => p.Category)
-                .Include(p => p.Supplier)
                 .OrderBy(p => p.ProductName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -47,71 +55,13 @@ namespace NorthwindApp.Controllers
 
             ViewData["CurrentPage"] = page;
             ViewData["TotalPages"] = totalPages;
+            ViewData["SearchString"] = searchString;
 
             return View(productos);
         }
-
-        /*public async Task<IActionResult> Index()
-        {
-            var productos = await _context.Products
-            .Where(p => p.Discontinued == 0)
-            .OrderByDescending(p => p.UnitPrice)
-            .Take(10)
-            .ToListAsync();
-
-            return View(productos);
-        }*/
-
-        /*
-         public async Task<IActionResult> Index()
-        {
-            string productos = "Chai";
-            var porNombre = await _context.Products
-                .Where(p => p.ProductName.Contains(palabra))
-                .ToListAsync();
-
-            return View(productos);
-        }
-
-        */
-
-        /*public async Task<IActionResult> Index()
-        {
-            var productos = await _context.Products
-            .Include(p => p.Category)
-            .Take(10)
-            .ToListAsync();
-
-            return View(productos);
-        }*/
-
-        /* public async Task<IActionResult> Index()
-         {
-             var productos = await _context.Products
-            .Include(p => p.Supplier)
-            .Take(10)
-            .ToListAsync();
-
-             return View(productos);
-         }*/
-
-
-        /*public async Task<IActionResult> Index()
-        {
-            var productos = await (
-                from p in _context.Products
-                join c in _context.Categories on p.CategoryId equals c.CategoryId
-                where c.CategoryName == "Beverages"
-                select p
-            ).ToListAsync();
-
-
-            return View(productos);
-        }*/
-
-
 
         // GET: Products/Details/5
+        [Authorize(Roles = "Admin,Employee")]
         public async Task<IActionResult> Details(short? id)
         {
             if (id == null)
@@ -141,8 +91,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
@@ -179,8 +127,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(short id, [Bind("ProductId,ProductName,SupplierId,CategoryId,QuantityPerUnit,UnitPrice,UnitsInStock,UnitsOnOrder,ReorderLevel,Discontinued")] Product product)
@@ -250,6 +196,98 @@ namespace NorthwindApp.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Products/ManageStock
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ManageStock(string searchString, int page = 1)
+        {
+            const int pageSize = 10;
+            page = Math.Max(page, 1);
+
+            var query = _context.Products
+                .Where(p => p.Discontinued == 0)
+                .Include(p => p.Category)
+                .Include(p => p.Supplier)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(p => p.ProductName.Contains(searchString));
+            }
+
+            var totalProducts = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalProducts / (double)pageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            ViewData["SearchString"] = searchString;
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = totalPages;
+
+            var products = await query
+                .OrderBy(p => p.ProductName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return View(products);
+        }
+
+        // POST: Products/IncrementStock
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> IncrementStock(short productId, short quantity)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+                return NotFound();
+
+            product.UnitsInStock = (short?)(product.UnitsInStock + quantity);
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            TempData["StockMessage"] = $"Se agregaron {quantity} unidades a {product.ProductName}. Stock actual: {product.UnitsInStock}";
+            return RedirectToAction(nameof(ManageStock), new { page = 1 });
+        }
+
+        // POST: Products/DecrementStock
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DecrementStock(short productId, short quantity)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+                return NotFound();
+
+            if (product.UnitsInStock < quantity)
+            {
+                TempData["StockError"] = $"Stock insuficiente. Stock actual: {product.UnitsInStock}";
+                return RedirectToAction(nameof(ManageStock));
+            }
+
+            product.UnitsInStock = (short?)(product.UnitsInStock - quantity);
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            TempData["StockMessage"] = $"Se redujeron {quantity} unidades de {product.ProductName}. Stock actual: {product.UnitsInStock}";
+            return RedirectToAction(nameof(ManageStock));
+        }
+
+        // GET: Products/LowStock
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> LowStock()
+        {
+            var products = await _context.Products
+                .Where(p => p.Discontinued == 0 && p.UnitsInStock <= p.ReorderLevel)
+                .Include(p => p.Category)
+                .Include(p => p.Supplier)
+                .OrderBy(p => p.UnitsInStock)
+                .ToListAsync();
+            return View(products);
         }
 
         private bool ProductExists(short id)

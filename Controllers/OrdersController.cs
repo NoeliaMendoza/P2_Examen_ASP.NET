@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using NorthwindApp.Models;
 
 namespace NorthwindApp.Controllers
 {
+    [Authorize(Roles = "Admin,Employee")]
     public class OrdersController : Controller
     {
         private readonly NorthwindContext _context;
@@ -20,12 +22,44 @@ namespace NorthwindApp.Controllers
         }
 
         // GET: Orders
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            var northwindContext = _context.Orders
+            const int pageSize = 10;
+            page = Math.Max(page, 1);
+
+            var query = _context.Orders
                 .Where(o => o.Discontinued == 0)
-                .Include(o => o.Customer).Include(o => o.Employee).Include(o => o.ShipViaNavigation);
-            return View(await northwindContext.ToListAsync());
+                .Include(o => o.Customer).Include(o => o.Employee).Include(o => o.ShipViaNavigation)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(o =>
+                    o.OrderId.ToString().Contains(searchString) ||
+                    o.Customer.CustomerId.Contains(searchString) ||
+                    o.Customer.CompanyName.Contains(searchString) ||
+                    o.ShipName.Contains(searchString) ||
+                    o.ShipCity.Contains(searchString) ||
+                    o.ShipCountry.Contains(searchString));
+            }
+
+            var totalOrders = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalOrders / (double)pageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var orders = await query
+                .OrderByDescending(o => o.OrderDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = totalPages;
+            ViewData["SearchString"] = searchString;
+
+            return View(orders);
         }
 
         // GET: Orders/Details/5
@@ -40,6 +74,8 @@ namespace NorthwindApp.Controllers
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
                 .Include(o => o.ShipViaNavigation)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(m => m.OrderId == id && m.Discontinued == 0);
             if (order == null)
             {
@@ -59,8 +95,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Orders/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("OrderId,CustomerId,EmployeeId,OrderDate,RequiredDate,ShippedDate,ShipVia,Freight,ShipName,ShipAddress,ShipCity,ShipRegion,ShipPostalCode,ShipCountry")] Order order)
@@ -98,8 +132,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Orders/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(short id, [Bind("OrderId,CustomerId,EmployeeId,OrderDate,RequiredDate,ShippedDate,ShipVia,Freight,ShipName,ShipAddress,ShipCity,ShipRegion,ShipPostalCode,ShipCountry")] Order order)

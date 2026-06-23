@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using NorthwindApp.Models;
 
 namespace NorthwindApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class SuppliersController : Controller
     {
         private readonly NorthwindContext _context;
@@ -20,9 +22,38 @@ namespace NorthwindApp.Controllers
         }
 
         // GET: Suppliers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, int page = 1)
         {
-            return View(await _context.Suppliers.Where(s => s.Discontinued == 0).ToListAsync());
+            const int pageSize = 10;
+            page = Math.Max(page, 1);
+
+            var query = _context.Suppliers.Where(s => s.Discontinued == 0).AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(s =>
+                    s.CompanyName.Contains(searchString) ||
+                    s.ContactName.Contains(searchString) ||
+                    s.ContactTitle.Contains(searchString) ||
+                    s.City.Contains(searchString) ||
+                    s.Country.Contains(searchString));
+            }
+
+            var totalSuppliers = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalSuppliers / (double)pageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            ViewData["SearchString"] = searchString;
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = totalPages;
+
+            return View(await query
+                .OrderBy(s => s.CompanyName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync());
         }
 
         // GET: Suppliers/Details/5
@@ -50,8 +81,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Suppliers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("SupplierId,CompanyName,ContactName,ContactTitle,Address,City,Region,PostalCode,Country,Phone,Fax,Homepage")] Supplier supplier)
@@ -83,8 +112,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Suppliers/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(short id, [Bind("SupplierId,CompanyName,ContactName,ContactTitle,Address,City,Region,PostalCode,Country,Phone,Fax,Homepage")] Supplier supplier)

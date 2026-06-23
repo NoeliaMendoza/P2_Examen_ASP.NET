@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using NorthwindApp.Models;
 
 namespace NorthwindApp.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class CategoriesController : Controller
     {
         private readonly NorthwindContext _context;
@@ -20,9 +22,20 @@ namespace NorthwindApp.Controllers
         }
 
         // GET: Categories
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            return View(await _context.Categories.Where(c => c.Discontinued == 0).ToListAsync());
+            var query = _context.Categories.Where(c => c.Discontinued == 0).AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(c =>
+                    c.CategoryName.Contains(searchString) ||
+                    c.Description.Contains(searchString));
+            }
+
+            ViewData["SearchString"] = searchString;
+
+            return View(await query.OrderBy(c => c.CategoryName).ToListAsync());
         }
 
         // GET: Categories/Details/5
@@ -50,8 +63,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Categories/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("CategoryId,CategoryName,Description,Picture")] Category category)
@@ -83,8 +94,6 @@ namespace NorthwindApp.Controllers
         }
 
         // POST: Categories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(short id, [Bind("CategoryId,CategoryName,Description,Picture")] Category category)
